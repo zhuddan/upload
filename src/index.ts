@@ -5,27 +5,22 @@ import prompts from 'prompts'
 import { cyan } from 'picocolors'
 import { onCancel } from './utils/cancel'
 import { values } from './utils/args'
-import type { UserConfig, UserConfigItem } from './types/types'
+import type { UserConfigItem } from './types/types'
 import { openFile } from './utils/openFile'
 import { parseJson } from './utils/parseJson'
 import { validateUserConfig } from './utils/validateUserConfig'
 import { logger } from './utils/logger'
 import { SftpTool } from './utils/sftp'
 import { getFiles } from './utils/getFiles'
+import { EXAMPLE_CONFIG } from './utils/constants'
+import { banner } from './utils/banner'
 
 const userConfigPath = `${process.env.HOME ?? process.env.USERPROFILE}/.upload.config.json`
 
-const EXAMPLE_CONFIG: UserConfig = {
-  example: {
-    host: '127.0.0.1',
-    port: 22,
-    username: 'root',
-    password: '123456',
-  },
-}
-
 async function main() {
   try {
+    banner()
+
     const empty = !fs.existsSync(userConfigPath)
     if (empty) {
       const { create } = await prompts({

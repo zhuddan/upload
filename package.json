@@ -17,6 +17,7 @@
     "@types/node": "^22.5.0",
     "@types/prompts": "^2.4.9",
     "@types/ssh2-sftp-client": "^9.0.4",
+    "boxen": "^8.0.1",
     "eslint": "9.5.0",
     "ora": "^8.1.0",
     "picocolors": "^1.0.1",
