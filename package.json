@@ -1,23 +1,32 @@
 {
   "name": "@zd~/upload",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
   "author": "",
   "license": "ISC",
   "keywords": [],
+  "bin": "dist/script.js",
+  "files": [
+    "dist/script.js"
+  ],
   "scripts": {
-    "dev": "rollup -c -w"
+    "dev": "rollup -c -w",
+    "build": "rollup -c",
+    "release": "bumpp",
+    "publish": "publish --access public -no-git-checks"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^2.21.3",
     "@rollup/plugin-commonjs": "^26.0.1",
     "@rollup/plugin-json": "^6.1.0",
     "@rollup/plugin-node-resolve": "^15.2.3",
+    "@rollup/plugin-terser": "^0.4.4",
     "@rollup/plugin-typescript": "^11.1.6",
     "@types/node": "^22.5.0",
     "@types/prompts": "^2.4.9",
     "@types/ssh2-sftp-client": "^9.0.4",
     "boxen": "^8.0.1",
+    "bumpp": "^9.5.2",
     "eslint": "9.5.0",
     "ora": "^8.1.0",
     "picocolors": "^1.0.1",
@@ -26,6 +35,7 @@
     "rollup-plugin-delete": "^2.0.0",
     "rollup-plugin-typescript": "^1.0.1",
     "ssh2-sftp-client": "^11.0.0",
+    "terser": "^5.31.6",
     "typescript": "^5.5.4"
   }
 }
