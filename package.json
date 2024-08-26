@@ -1,6 +1,6 @@
 {
   "name": "@zd~/upload",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "",
   "author": "",
   "license": "ISC",
@@ -12,8 +12,8 @@
   "scripts": {
     "dev": "rollup -c -w",
     "build": "rollup -c",
-    "release": "bumpp",
-    "publish": "pnpm publish --access public -no-git-checks"
+    "update": "bumpp",
+    "release": "pnpm publish --access public -no-git-checks"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^2.21.3",
