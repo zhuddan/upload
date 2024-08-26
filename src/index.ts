@@ -2,8 +2,7 @@ import fs from 'node:fs'
 import process from 'node:process'
 import path from 'node:path'
 import prompts from 'prompts'
-import { cyan, red } from 'picocolors'
-import figures from 'prompts/lib/util/figures.js'
+import { cyan } from 'picocolors'
 import { onCancel } from './utils/cancel'
 import { values } from './utils/args'
 import type { UserConfig, UserConfigItem } from './types/types'
@@ -14,7 +13,7 @@ import { logger } from './utils/logger'
 import { SftpTool } from './utils/sftp'
 import { getFiles } from './utils/getFiles'
 
-const userConfigPath = `${process.env.HOME ?? process.env.USERPROFILE}/zd.upload.config.json`
+const userConfigPath = `${process.env.HOME ?? process.env.USERPROFILE}/.upload.config.json`
 
 const EXAMPLE_CONFIG: UserConfig = {
   example: {
@@ -75,7 +74,7 @@ async function main() {
     if (!values.config) {
       if (configNames.length === 1) {
         values.config = configNames[0]
-        logger.warning(`当前只有一个配置文件，默认使用 ${values.config} 配置`)
+        logger.info(`当前只有一个配置文件，默认使用 ${values.config} 配置`)
       }
       else {
         const { config } = await prompts({
@@ -101,14 +100,23 @@ async function main() {
 async function upload(config: UserConfigItem, localdir: string, serverdir: string) {
   const cwd = process.cwd()
   const _localdir = path.resolve(cwd, localdir)
-  const sftp = new SftpTool(config)
-  await sftp.ensureRemoteDirectoryExists(serverdir)
+
+  const allFiles = getFiles(_localdir)
+  if (!allFiles.length) {
+    logger.warning('本地文件夹为空，无需上传')
+    return
+  }
+
   const files = getFiles(_localdir).map((filePath) => {
     const remotePath = serverdir + filePath
       .replace(_localdir, '')
       .replace(/\\/g, '/')
     return { filePath, remotePath }
   })
+
+  const sftp = new SftpTool(config)
+  await sftp.ensureRemoteDirectoryExists(serverdir)
+
   await sftp.uploadMultipleFiles(files)
 }
 

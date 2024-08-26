@@ -40805,10 +40805,6 @@ class SftpTool {
     async uploadMultipleFiles(files) {
         try {
             await this.connect();
-            console.log(this.sftp);
-            console.log(this.sftp);
-            console.log(this.sftp);
-            console.log(this.sftp);
             for (const file of files) {
                 await this.uploadFile(file.filePath, file.remotePath);
             }
@@ -40838,7 +40834,7 @@ function getFiles(dir) {
     return files;
 }
 
-const userConfigPath = `${process$2.env.HOME ?? process$2.env.USERPROFILE}/zd.upload.config.json`;
+const userConfigPath = `${process$2.env.HOME ?? process$2.env.USERPROFILE}/.upload.config.json`;
 const EXAMPLE_CONFIG = {
     example: {
         host: '127.0.0.1',
@@ -40893,7 +40889,7 @@ async function main() {
         if (!values.config) {
             if (configNames.length === 1) {
                 values.config = configNames[0];
-                logger.warning(`当前只有一个配置文件，默认使用 ${values.config} 配置`);
+                logger.info(`当前只有一个配置文件，默认使用 ${values.config} 配置`);
             }
             else {
                 const { config } = await prompts$1({
@@ -40918,14 +40914,19 @@ async function main() {
 async function upload(config, localdir, serverdir) {
     const cwd = process$2.cwd();
     const _localdir = path.resolve(cwd, localdir);
-    const sftp = new SftpTool(config);
-    await sftp.ensureRemoteDirectoryExists(serverdir);
+    const allFiles = getFiles(_localdir);
+    if (!allFiles.length) {
+        logger.warning('本地文件夹为空，无需上传');
+        return;
+    }
     const files = getFiles(_localdir).map((filePath) => {
         const remotePath = serverdir + filePath
             .replace(_localdir, '')
             .replace(/\\/g, '/');
         return { filePath, remotePath };
     });
+    const sftp = new SftpTool(config);
+    await sftp.ensureRemoteDirectoryExists(serverdir);
     await sftp.uploadMultipleFiles(files);
 }
 main();

@@ -76,10 +76,6 @@ export class SftpTool {
   async uploadMultipleFiles(files: { filePath: string | Buffer | NodeJS.ReadableStream, remotePath: string }[]) {
     try {
       await this.connect()
-      console.log(this.sftp)
-      console.log(this.sftp)
-      console.log(this.sftp)
-      console.log(this.sftp)
       for (const file of files) {
         await this.uploadFile(file.filePath, file.remotePath)
       }
