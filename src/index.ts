@@ -6,27 +6,30 @@ import { cyan } from 'picocolors'
 import { onCancel } from './utils/cancel'
 import { values } from './utils/args'
 import type { UserConfigItem } from './types/types'
-import { openFile } from './utils/openFile'
 import { parseJson } from './utils/parseJson'
 import { validateUserConfig } from './utils/validateUserConfig'
 import { logger } from './utils/logger'
 import { SftpTool } from './utils/sftp'
 import { getFiles } from './utils/getFiles'
-import { EXAMPLE_CONFIG } from './utils/constants'
 import { banner } from './utils/banner'
+import { EXAMPLE_CONFIG } from './utils/constants'
+import { openFile } from './utils/openFile'
 
-const userConfigPath = `${process.env.HOME ?? process.env.USERPROFILE}/.upload.config.json`
+const userConfigPath = path.normalize(`${process.env.HOME ?? process.env.USERPROFILE}/.upload.config.json`)
+
+// const uploadCacheDir = path.normalize(`${process.env.HOME ?? process.env.USERPROFILE}/.upload.config.cache`)
+// const cwdConfigPath = path.normalize(`${process.cwd()}/.upload.config.json`)
+// const gitignore = path.normalize(`${process.cwd()}/.gitignore`)
 
 async function main() {
   try {
     banner()
-
     const empty = !fs.existsSync(userConfigPath)
     if (empty) {
       const { create } = await prompts({
         name: 'create',
         type: 'toggle',
-        message: '未发现任何配置文件，请先创建?',
+        message: `未找到配置文件，是否创建?`,
         initial: false,
         active: '是',
         inactive: '否',
@@ -69,7 +72,7 @@ async function main() {
     if (!values.config) {
       if (configNames.length === 1) {
         values.config = configNames[0]
-        logger.info(`当前只有一个配置文件，默认使用 ${values.config} 配置`)
+        logger.infoText(`当前只有一个配置文件，默认使用 ${values.config} 配置`)
       }
       else {
         const { config } = await prompts({
@@ -85,6 +88,11 @@ async function main() {
         values.config = config
       }
     }
+    // if (values.watch) {
+    //   await initWatch(allConfig[`${values.config}`], values.localdir, values.serverdir)
+    // }
+    // else {
+    // }
     await upload(allConfig[`${values.config}`], values.localdir, values.serverdir)
   }
   catch (error: any) {
@@ -101,8 +109,9 @@ async function upload(config: UserConfigItem, localdir: string, serverdir: strin
     logger.warning('本地文件夹为空，无需上传')
     return
   }
-
-  const files = getFiles(_localdir).map((filePath) => {
+  console.log(' ')
+  logger.info('开始上传')
+  const files = allFiles.map((filePath) => {
     const remotePath = serverdir + filePath
       .replace(_localdir, '')
       .replace(/\\/g, '/')
@@ -114,5 +123,15 @@ async function upload(config: UserConfigItem, localdir: string, serverdir: strin
 
   await sftp.uploadMultipleFiles(files)
 }
+
+// function initWatch(config: UserConfigItem, localdir: string, serverdir: string) {
+//   if (!fs.existsSync(uploadCacheDir)) {
+//     fs.mkdirSync(uploadCacheDir, { recursive: true })
+//   }
+//   const cacheJson = `${path.resolve(process.cwd(), localdir).replace(/(:?)\\/g, '-')}.json`
+//   if (!fs.existsSync(cacheJson)) {
+//     fs.writeFileSync(path.resolve(uploadCacheDir, cacheJson), JSON.stringify({}))
+//   }
+// }
 
 main()

@@ -9,8 +9,6 @@ var require$$0$3 = require('tty');
 var node_util = require('node:util');
 var os = require('node:os');
 var tty = require('node:tty');
-var node_child_process = require('node:child_process');
-var node_buffer = require('node:buffer');
 var require$$0$8 = require('net');
 var require$$0$9 = require('stream');
 var require$$0$7 = require('path');
@@ -25,6 +23,8 @@ var require$$2$2 = require('tls');
 var require$$2$1 = require('dns');
 var require$$1$2 = require('util');
 var require$$1$1 = require('zlib');
+var node_child_process = require('node:child_process');
+var node_buffer = require('node:buffer');
 
 var commonjsGlobal = typeof globalThis !== 'undefined' ? globalThis : typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
 
@@ -6397,8 +6397,49 @@ const { values, positionals } = node_util.parseArgs({
             type: 'string',
             short: 's',
         },
+        // watch: {
+        //   type: 'boolean',
+        //   short: 'w',
+        // },
     },
 });
+
+function parseJson(jsonPath) {
+    try {
+        return JSON.parse(fs$2.readFileSync(jsonPath, 'utf8').toString());
+    }
+    // eslint-disable-next-line unused-imports/no-unused-vars
+    catch (_error) {
+        throw new Error('配置解析失败');
+    }
+}
+
+function validateUserConfig(config) {
+    if (config === undefined || config === null) {
+        throw new Error('配置解析失败 config is null or undefined');
+    }
+    const allConfigNames = Object.keys(config);
+    if (!allConfigNames.length) {
+        throw new TypeError('配置解析失败 At least one configuration is required');
+    }
+    const keys = ['host', 'port', 'username', 'password'];
+    for (let index = 0; index < allConfigNames.length; index++) {
+        const name = allConfigNames[index];
+        const item = config[name];
+        for (const key of keys) {
+            if (item[key] === undefined || item[key] === null) {
+                throw new TypeError(`配置解析失败 config[${index}][${key}] is null or undefined`);
+            }
+            if (key === 'port' && typeof item[key] !== 'number') {
+                throw new TypeError(`配置解析失败 config[${index}][${key}] is not a number`);
+            }
+            if (key !== 'port' && typeof item[key] !== 'string') {
+                throw new TypeError(`配置解析失败 config[${index}][${key}] is not a string`);
+            }
+        }
+    }
+    return config;
+}
 
 const ANSI_BACKGROUND_OFFSET$1 = 10;
 
@@ -10237,113 +10278,6 @@ class Logger {
     }
 }
 const logger = new Logger();
-
-async function exec$1(command, args, options = {}) {
-    return new Promise((resolve, reject) => {
-        const _process = node_child_process.spawn(command, args, {
-            stdio: [
-                'ignore', // stdin
-                'pipe', // stdout
-                'pipe', // stderr
-            ],
-            ...options,
-            shell: process$2.platform === 'win32',
-        });
-        const stderrChunks = [];
-        const stdoutChunks = [];
-        _process.stderr?.on('data', (chunk) => {
-            stderrChunks.push(chunk);
-        });
-        _process.stdout?.on('data', (chunk) => {
-            stdoutChunks.push(chunk);
-        });
-        _process.on('error', (error) => {
-            reject(error);
-        });
-        _process.on('exit', (code) => {
-            const ok = code === 0;
-            const stderr = node_buffer.Buffer.concat(stderrChunks).toString('utf-8').trim();
-            const stdout = node_buffer.Buffer.concat(stdoutChunks).toString('utf-8').trim();
-            const result = { ok, code, stderr, stdout };
-            resolve(result);
-        });
-    });
-}
-
-async function openFile(filePath) {
-    const platform = process$2.platform;
-    let command;
-    let args;
-    switch (platform) {
-        case 'win32':
-            // Windows 系统使用 start 命令
-            command = 'cmd';
-            args = ['/c', 'start', '', filePath];
-            break;
-        case 'darwin':
-            // macOS 使用 open 命令
-            command = 'open';
-            args = [filePath];
-            break;
-        case 'linux':
-            // Linux 使用 xdg-open 命令
-            command = 'xdg-open';
-            args = [filePath];
-            break;
-        default:
-            logger.error('Unsupported operating system.');
-            return;
-    }
-    try {
-        const result = await exec$1(command, args);
-        if (result.ok) {
-            // logger.success('File opened successfully!')
-        }
-        else {
-            logger.error(`Error opening file:${result.stderr}`);
-        }
-    }
-    catch (error) {
-        logger.error(`Error executing command:${error}`);
-    }
-}
-
-function parseJson(jsonPath) {
-    try {
-        return JSON.parse(fs$2.readFileSync(jsonPath, 'utf8').toString());
-    }
-    // eslint-disable-next-line unused-imports/no-unused-vars
-    catch (_error) {
-        throw new Error('配置解析失败');
-    }
-}
-
-function validateUserConfig(config) {
-    if (config === undefined || config === null) {
-        throw new Error('配置解析失败 config is null or undefined');
-    }
-    const allConfigNames = Object.keys(config);
-    if (!allConfigNames.length) {
-        throw new TypeError('配置解析失败 At least one configuration is required');
-    }
-    const keys = ['host', 'port', 'username', 'password'];
-    for (let index = 0; index < allConfigNames.length; index++) {
-        const name = allConfigNames[index];
-        const item = config[name];
-        for (const key of keys) {
-            if (item[key] === undefined || item[key] === null) {
-                throw new TypeError(`配置解析失败 config[${index}][${key}] is null or undefined`);
-            }
-            if (key === 'port' && typeof item[key] !== 'number') {
-                throw new TypeError(`配置解析失败 config[${index}][${key}] is not a number`);
-            }
-            if (key !== 'port' && typeof item[key] !== 'string') {
-                throw new TypeError(`配置解析失败 config[${index}][${key}] is not a string`);
-            }
-        }
-    }
-    return config;
-}
 
 var ber = {exports: {}};
 
@@ -40209,22 +40143,6 @@ function getFiles(dir) {
     return files;
 }
 
-const bannerMessage = `
-${picocolorsExports.cyan('欢迎使用 @zd~/upload')}
-${picocolorsExports.bgRed('警告')} ${picocolorsExports.red('请不要将任何服务器信息存放到不受信任的地方!')}
-${picocolorsExports.gray('建议将上传配置文件 upload.config.json 加入')}
-${picocolorsExports.gray('.gitignore 以避免上传到版本控制系统。')}
-${picocolorsExports.gray('由于操作失误导致的服务器信息泄露，概不负责。')}
-`;
-const EXAMPLE_CONFIG = {
-    example: {
-        host: '127.0.0.1',
-        port: 22,
-        username: 'root',
-        password: '123456',
-    },
-};
-
 function ansiRegex$3({onlyFirst = false} = {}) {
 	const pattern = [
 	    '[\\u001B\\u009B][[\\]()#;?]*(?:(?:(?:(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]+)*|[a-zA-Z\\d]+(?:;[-a-zA-Z\\d\\/#&.:=?%@~_]*)*)?\\u0007)',
@@ -41165,7 +41083,7 @@ const stringVisibleTrimSpacesRight = string => {
 // 'hard' will never allow a string to take up more than columns characters.
 //
 // 'soft' allows long words to expand past the column length.
-const exec = (string, columns, options = {}) => {
+const exec$1 = (string, columns, options = {}) => {
 	if (options.trim !== false && string.trim() === '') {
 		return '';
 	}
@@ -41282,7 +41200,7 @@ function wrapAnsi(string, columns, options) {
 		.normalize()
 		.replaceAll('\r\n', '\n')
 		.split('\n')
-		.map(line => exec(line, columns, options))
+		.map(line => exec$1(line, columns, options))
 		.join('\n');
 }
 
@@ -41652,6 +41570,22 @@ function boxen(text, options) {
 	return boxContent(text, options.width, options);
 }
 
+const bannerMessage = `
+${picocolorsExports.cyan('欢迎使用 @zd~/upload')}
+${picocolorsExports.bgRed('警告')} ${picocolorsExports.red('请不要将任何服务器信息存放到不受信任的地方!')}
+${picocolorsExports.gray('建议将上传配置文件 upload.config.json 加入')}
+${picocolorsExports.gray('.gitignore 以避免上传到版本控制系统。')}
+${picocolorsExports.gray('由于操作失误导致的服务器信息泄露，概不负责。')}
+`;
+const EXAMPLE_CONFIG = {
+    example: {
+        host: '127.0.0.1',
+        port: 22,
+        username: 'root',
+        password: '123456',
+    },
+};
+
 const boxenOptions = {
     padding: 1,
     margin: 1,
@@ -41661,7 +41595,80 @@ const boxenOptions = {
 };
 const banner = () => console.log(boxen(bannerMessage, boxenOptions));
 
-const userConfigPath = `${process$2.env.HOME ?? process$2.env.USERPROFILE}/.upload.config.json`;
+async function exec(command, args, options = {}) {
+    return new Promise((resolve, reject) => {
+        const _process = node_child_process.spawn(command, args, {
+            stdio: [
+                'ignore', // stdin
+                'pipe', // stdout
+                'pipe', // stderr
+            ],
+            ...options,
+            shell: process$2.platform === 'win32',
+        });
+        const stderrChunks = [];
+        const stdoutChunks = [];
+        _process.stderr?.on('data', (chunk) => {
+            stderrChunks.push(chunk);
+        });
+        _process.stdout?.on('data', (chunk) => {
+            stdoutChunks.push(chunk);
+        });
+        _process.on('error', (error) => {
+            reject(error);
+        });
+        _process.on('exit', (code) => {
+            const ok = code === 0;
+            const stderr = node_buffer.Buffer.concat(stderrChunks).toString('utf-8').trim();
+            const stdout = node_buffer.Buffer.concat(stdoutChunks).toString('utf-8').trim();
+            const result = { ok, code, stderr, stdout };
+            resolve(result);
+        });
+    });
+}
+
+async function openFile(filePath) {
+    const platform = process$2.platform;
+    let command;
+    let args;
+    switch (platform) {
+        case 'win32':
+            // Windows 系统使用 start 命令
+            command = 'cmd';
+            args = ['/c', 'start', '', filePath];
+            break;
+        case 'darwin':
+            // macOS 使用 open 命令
+            command = 'open';
+            args = [filePath];
+            break;
+        case 'linux':
+            // Linux 使用 xdg-open 命令
+            command = 'xdg-open';
+            args = [filePath];
+            break;
+        default:
+            logger.error('Unsupported operating system.');
+            return;
+    }
+    try {
+        const result = await exec(command, args);
+        if (result.ok) {
+            // logger.success('File opened successfully!')
+        }
+        else {
+            logger.error(`Error opening file:${result.stderr}`);
+        }
+    }
+    catch (error) {
+        logger.error(`Error executing command:${error}`);
+    }
+}
+
+const userConfigPath = path.normalize(`${process$2.env.HOME ?? process$2.env.USERPROFILE}/.upload.config.json`);
+// const uploadCacheDir = path.normalize(`${process.env.HOME ?? process.env.USERPROFILE}/.upload.config.cache`)
+// const cwdConfigPath = path.normalize(`${process.cwd()}/.upload.config.json`)
+// const gitignore = path.normalize(`${process.cwd()}/.gitignore`)
 async function main() {
     try {
         banner();
@@ -41670,7 +41677,7 @@ async function main() {
             const { create } = await prompts$1({
                 name: 'create',
                 type: 'toggle',
-                message: '未发现任何配置文件，请先创建?',
+                message: `未找到配置文件，是否创建?`,
                 initial: false,
                 active: '是',
                 inactive: '否',
@@ -41709,7 +41716,7 @@ async function main() {
         if (!values.config) {
             if (configNames.length === 1) {
                 values.config = configNames[0];
-                logger.info(`当前只有一个配置文件，默认使用 ${values.config} 配置`);
+                logger.infoText(`当前只有一个配置文件，默认使用 ${values.config} 配置`);
             }
             else {
                 const { config } = await prompts$1({
@@ -41725,6 +41732,11 @@ async function main() {
                 values.config = config;
             }
         }
+        // if (values.watch) {
+        //   await initWatch(allConfig[`${values.config}`], values.localdir, values.serverdir)
+        // }
+        // else {
+        // }
         await upload(allConfig[`${values.config}`], values.localdir, values.serverdir);
     }
     catch (error) {
@@ -41739,7 +41751,9 @@ async function upload(config, localdir, serverdir) {
         logger.warning('本地文件夹为空，无需上传');
         return;
     }
-    const files = getFiles(_localdir).map((filePath) => {
+    console.log(' ');
+    logger.info('开始上传');
+    const files = allFiles.map((filePath) => {
         const remotePath = serverdir + filePath
             .replace(_localdir, '')
             .replace(/\\/g, '/');
@@ -41749,4 +41763,13 @@ async function upload(config, localdir, serverdir) {
     await sftp.ensureRemoteDirectoryExists(serverdir);
     await sftp.uploadMultipleFiles(files);
 }
+// function initWatch(config: UserConfigItem, localdir: string, serverdir: string) {
+//   if (!fs.existsSync(uploadCacheDir)) {
+//     fs.mkdirSync(uploadCacheDir, { recursive: true })
+//   }
+//   const cacheJson = `${path.resolve(process.cwd(), localdir).replace(/(:?)\\/g, '-')}.json`
+//   if (!fs.existsSync(cacheJson)) {
+//     fs.writeFileSync(path.resolve(uploadCacheDir, cacheJson), JSON.stringify({}))
+//   }
+// }
 main();
