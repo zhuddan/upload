@@ -5,7 +5,7 @@
 > [!IMPORTANT]
 > 默认情况下，上传操作会覆盖原有文件。如果需要恢复原文件，请务必先进行备份。
 
-![Example Image](./readme.png)
+![cmd](https://github.com/zhuddan/upload/blob/master/readme.png?raw=true)
 
 ## 使用方法
 
