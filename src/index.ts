@@ -86,11 +86,10 @@ async function main() {
         values.config = config
       }
     }
-    // if (values.watch) {
-    //   await initWatch(allConfig[`${values.config}`], values.localdir, values.serverdir)
-    // }
-    // else {
-    // }
+    else if (!configNames.includes(values.config)) {
+      logger.warning(`当前所有配置文件如下：\n${configNames.map(e => cyan(`  ${e} (${allConfig[e].host}:${allConfig[e].port}) `)).join('\n')}`)
+      throw new Error(`配置文件 "${values.config}" 不存在 `)
+    }
     await upload(allConfig[`${values.config}`], values.localdir, values.serverdir)
   }
   catch (error: any) {
