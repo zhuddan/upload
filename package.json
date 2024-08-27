@@ -16,7 +16,7 @@
     "update": "bumpp",
     "release": "pnpm publish --access public -no-git-checks",
     "test": "node dist/script.js -l ./test -s /test",
-    "test:config": "node dist/script.js -c config -l ./test -s /test"
+    "test:config": "node dist/script.js -c local -l ./test -s /test"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^2.21.3",

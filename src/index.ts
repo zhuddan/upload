@@ -15,6 +15,7 @@ import { getFiles } from './utils/getFiles'
 import { banner } from './utils/banner'
 import { EXAMPLE_CONFIG } from './utils/constants'
 import { openFile } from './utils/openFile'
+import { showIp } from './utils/showIp'
 
 const configFileName = 'upload.config.json'
 const userConfigPath = path.normalize(path.join(`${process.env.HOME ?? process.env.USERPROFILE}/`, configFileName))
@@ -70,7 +71,7 @@ async function main() {
     if (!values.config) {
       if (configNames.length === 1) {
         values.config = configNames[0]
-        logger.infoText(`当前只有一个配置文件，默认使用 ${values.config} (${`${allConfig[values.config].host}:${allConfig[values.config].port}`}) 配置`)
+        logger.infoText(`当前只有一个配置文件，默认使用 ${values.config} (${`${showIp(allConfig[values.config])}`}) 配置`)
       }
       else {
         const { config } = await prompts({
@@ -79,9 +80,11 @@ async function main() {
           message: '请选择配置文件',
           initial: 0,
           choices: configNames.map(name => ({
-            title: `${name} (${allConfig[name].host}:${allConfig[name].port})`,
+            title: `${name} (${showIp(allConfig[name])})`,
             value: name,
           })),
+        }, {
+          onCancel,
         })
         values.config = config
       }
