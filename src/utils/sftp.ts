@@ -1,16 +1,18 @@
 import type { Buffer } from 'node:buffer'
+import type { Readable } from 'node:stream'
 import type { ConnectOptions } from 'ssh2-sftp-client'
-
-import Client from 'ssh2-sftp-client'
+import SftpClient from 'ssh2-sftp-client'
+import * as ftp from 'basic-ftp'
+import type { UserConfigItem } from 'src/types'
 import { logger } from './logger'
 
-export class SftpTool {
-  sftp: Client | null = null
+class SftpTool {
+  sftp: SftpClient | null = null
   constructor(private config: ConnectOptions) { }
   async connect() {
     try {
       if (!this.sftp) {
-        this.sftp = new Client()
+        this.sftp = new SftpClient()
         await this.sftp.connect(this.config)
       }
     }
@@ -66,7 +68,7 @@ export class SftpTool {
     }
   }
 
-  async list(remotePath: string): Promise<Client.FileInfo[]> {
+  async list(remotePath: string): Promise<SftpClient.FileInfo[]> {
     if (!this.sftp)
       throw new Error('SFTP client not connected')
 
@@ -89,29 +91,111 @@ export class SftpTool {
   }
 }
 
-export class SftpQueue {
-  queue: Array<() => Promise<void>>
-  isProcessing: boolean
-  constructor() {
-    this.queue = []
-    this.isProcessing = false
-  }
+class FtpTool {
+  client: ftp.Client | null = null
 
-  addToQueue(task: { (): Promise<void> }) {
-    this.queue.push(task)
-  }
+  constructor(private config: ftp.AccessOptions) {}
 
-  async processQueue() {
-    if (this.isProcessing || this.queue.length === 0)
-      return
-    this.isProcessing = true
+  async connect() {
     try {
-      await this.queue.shift()?.()
+      if (!this.client) {
+        this.client = new ftp.Client()
+        await this.client.access({
+          ...this.config,
+          secure: false,
+        })
+      }
     }
     catch (error) {
-      console.error('Error during task:', error)
+      throw new Error(`FTP 连接失败: ${(error as any).message}`)
     }
-    this.isProcessing = false
-    this.processQueue()
+  }
+
+  async disconnect() {
+    if (this.client) {
+      await this.client.close()
+      this.client = null
+    }
+  }
+
+  async ensureRemoteDirectoryExists(remotePath: string) {
+    const remoteDirectory = remotePath.substring(0, remotePath.lastIndexOf('/'))
+    if (!this.client) {
+      await this.connect()
+    }
+    if (!this.client) {
+      throw new Error('FTP client not connected')
+    }
+
+    const exists = await this.client.cd(remoteDirectory).then(() => true).catch(() => false)
+    if (!exists) {
+      logger.warning(`${remoteDirectory} does not exist`)
+      await this.client.ensureDir(remoteDirectory)
+    }
+  }
+
+  async uploadFile(filePath: string | Readable, remotePath: string) {
+    logger.info(`${filePath} 开始上传`)
+
+    try {
+      if (!this.client)
+        throw new Error('FTP client not connected')
+
+      await this.ensureRemoteDirectoryExists(remotePath)
+
+      if (typeof filePath === 'string') {
+        await this.client.uploadFrom(filePath, remotePath)
+      }
+      else {
+        await this.client.uploadFrom(filePath, remotePath)
+      }
+
+      logger.success(`${filePath} 上传成功`)
+    }
+    catch (err) {
+      logger.error(`${filePath} to ${remotePath} 上传失败`)
+      throw err
+    }
+  }
+
+  async list(remotePath: string): Promise<ftp.FileInfo[]> {
+    if (!this.client)
+      throw new Error('FTP client not connected')
+
+    return await this.client.list(remotePath)
+  }
+
+  async uploadMultipleFiles(files: { filePath: string | Readable, remotePath: string }[]) {
+    try {
+      await this.connect()
+      for (const file of files) {
+        await this.uploadFile(file.filePath, file.remotePath)
+      }
+    }
+    catch (err) {
+      console.error('Error during file upload:', err)
+    }
+    finally {
+      await this.disconnect()
+    }
+  }
+}
+
+export function createSftpClient(config: UserConfigItem) {
+  if (config.port === 22) {
+    return new SftpTool({
+      host: config.host,
+      port: config.port,
+      username: config.username,
+      password: config.password,
+    })
+  }
+  else {
+    return new FtpTool({
+      host: config.host,
+      port: config.port,
+      user: config.username === '' ? undefined : config.username,
+      password: config.password === '' ? undefined : config.password,
+    })
   }
 }

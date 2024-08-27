@@ -8,7 +8,7 @@ export function validateUserConfig(config: any) {
   if (!allConfigNames.length) {
     throw new TypeError('配置解析失败 At least one configuration is required')
   }
-  const keys: (keyof UserConfigItem)[] = ['host', 'port', 'username', 'password']
+  const keys: (keyof UserConfigItem)[] = ['host', 'port']
   for (let index = 0; index < allConfigNames.length; index++) {
     const name = allConfigNames[index]
     const item = config[name]
@@ -19,7 +19,7 @@ export function validateUserConfig(config: any) {
       if (key === 'port' && typeof item[key] !== 'number') {
         throw new TypeError(`配置解析失败 config[${index}][${key}] is not a number`)
       }
-      if (key !== 'port' && typeof item[key] !== 'string') {
+      if (key === 'host' && typeof item[key] !== 'string') {
         throw new TypeError(`配置解析失败 config[${index}][${key}] is not a string`)
       }
     }

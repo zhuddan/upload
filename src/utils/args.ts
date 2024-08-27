@@ -15,10 +15,6 @@ const { values, positionals } = parseArgs({
       type: 'string',
       short: 's',
     },
-    // watch: {
-    //   type: 'boolean',
-    //   short: 'w',
-    // },
   },
 })
 

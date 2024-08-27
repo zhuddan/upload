@@ -26,6 +26,7 @@
     "@types/node": "^22.5.0",
     "@types/prompts": "^2.4.9",
     "@types/ssh2-sftp-client": "^9.0.4",
+    "basic-ftp": "^5.0.5",
     "boxen": "^8.0.1",
     "bumpp": "^9.5.2",
     "eslint": "9.5.0",

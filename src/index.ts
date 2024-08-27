@@ -10,17 +10,14 @@ import type { UserConfigItem } from './types/types'
 import { parseJson } from './utils/parseJson'
 import { validateUserConfig } from './utils/validateUserConfig'
 import { logger } from './utils/logger'
-import { SftpTool } from './utils/sftp'
+import { createSftpClient } from './utils/sftp'
 import { getFiles } from './utils/getFiles'
 import { banner } from './utils/banner'
 import { EXAMPLE_CONFIG } from './utils/constants'
 import { openFile } from './utils/openFile'
 
-const userConfigPath = path.normalize(`${process.env.HOME ?? process.env.USERPROFILE}/.upload.config.json`)
-
-// const uploadCacheDir = path.normalize(`${process.env.HOME ?? process.env.USERPROFILE}/.upload.config.cache`)
-// const cwdConfigPath = path.normalize(`${process.cwd()}/.upload.config.json`)
-// const gitignore = path.normalize(`${process.cwd()}/.gitignore`)
+const configFileName = 'upload.config.json'
+const userConfigPath = path.normalize(path.join(`${process.env.HOME ?? process.env.USERPROFILE}/`, configFileName))
 
 async function main() {
   try {
@@ -73,7 +70,7 @@ async function main() {
     if (!values.config) {
       if (configNames.length === 1) {
         values.config = configNames[0]
-        logger.infoText(`当前只有一个配置文件，默认使用 ${values.config} 配置`)
+        logger.infoText(`当前只有一个配置文件，默认使用 ${values.config} (${`${allConfig[values.config].host}:${allConfig[values.config].port}`}) 配置`)
       }
       else {
         const { config } = await prompts({
@@ -82,7 +79,7 @@ async function main() {
           message: '请选择配置文件',
           initial: 0,
           choices: configNames.map(name => ({
-            title: name,
+            title: `${name} (${allConfig[name].host}:${allConfig[name].port})`,
             value: name,
           })),
         })
@@ -111,7 +108,8 @@ async function upload(config: UserConfigItem, localdir: string, serverdir: strin
     return
   }
   console.log(' ')
-  logger.info('开始上传')
+  logger.infoText('🎈🎈🎈 开始上传')
+  console.log(' ')
   const files = allFiles.map((filePath) => {
     const remotePath = serverdir + filePath
       .replace(_localdir, '')
@@ -119,20 +117,12 @@ async function upload(config: UserConfigItem, localdir: string, serverdir: strin
     return { filePath, remotePath }
   })
 
-  const sftp = new SftpTool(config)
+  const sftp = createSftpClient(config)
   await sftp.ensureRemoteDirectoryExists(serverdir)
-
   await sftp.uploadMultipleFiles(files)
+  console.log(' ')
+  logger.successText('🎉🎉🎉 上传完成')
+  console.log(' ')
 }
-
-// function initWatch(config: UserConfigItem, localdir: string, serverdir: string) {
-//   if (!fs.existsSync(uploadCacheDir)) {
-//     fs.mkdirSync(uploadCacheDir, { recursive: true })
-//   }
-//   const cacheJson = `${path.resolve(process.cwd(), localdir).replace(/(:?)\\/g, '-')}.json`
-//   if (!fs.existsSync(cacheJson)) {
-//     fs.writeFileSync(path.resolve(uploadCacheDir, cacheJson), JSON.stringify({}))
-//   }
-// }
 
 main()
