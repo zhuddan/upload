@@ -8,7 +8,8 @@
   "bin": "dist/script.js",
   "files": [
     "README.md",
-    "dist/script.js"
+    "dist/script.js",
+    "readme.png"
   ],
   "scripts": {
     "dev": "rollup -c -w",
