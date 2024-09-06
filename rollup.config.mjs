@@ -5,7 +5,7 @@ import { nodeResolve } from '@rollup/plugin-node-resolve'
 import commonjs from '@rollup/plugin-commonjs'
 import json from '@rollup/plugin-json'
 import del from 'rollup-plugin-delete'
-import terser from '@rollup/plugin-terser'
+// import terser from '@rollup/plugin-terser'
 
 export default defineConfig({
   input: './src/index.ts',
@@ -19,7 +19,7 @@ export default defineConfig({
       force: true,
       hook: 'buildStart',
     }),
-    terser(),
+    // terser(),
     typescript(),
     nodeResolve({
       exportConditions: ['node'], // add node option here,
