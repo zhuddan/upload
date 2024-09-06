@@ -13,7 +13,10 @@ class SftpTool {
     try {
       if (!this.sftp) {
         this.sftp = new SftpClient()
-        await this.sftp.connect(this.config)
+        await this.sftp.connect({
+          ...this.config,
+          timeout: 99999,
+        })
       }
     }
     catch (error) {
@@ -99,7 +102,7 @@ class FtpTool {
   async connect() {
     try {
       if (!this.client) {
-        this.client = new ftp.Client()
+        this.client = new ftp.Client(99999)
         await this.client.access({
           ...this.config,
           secure: false,
@@ -113,7 +116,7 @@ class FtpTool {
 
   async disconnect() {
     if (this.client) {
-      await this.client.close()
+      this.client.close()
       this.client = null
     }
   }
