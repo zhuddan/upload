@@ -1,9 +1,10 @@
 import { bgRed, cyan, gray, red } from 'picocolors'
 
 import type { UserConfig } from '../types/types'
+import { version } from '../../package.json'
 
 export const bannerMessage = `
-${cyan('欢迎使用 @zd~/upload')}
+${cyan(`欢迎使用 @zd~/upload@${version}`)}
 ${bgRed('警告')} ${red('请不要将任何服务器信息存放到不受信任的地方!')}
 ${gray('建议将上传配置文件 upload.config.json 加入')}
 ${gray('.gitignore 以避免上传到版本控制系统。')}
