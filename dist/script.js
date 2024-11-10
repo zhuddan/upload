@@ -42489,20 +42489,20 @@ class FtpTool {
     }
 }
 function createSftpClient(config) {
-    if (config.port === 22) {
-        return new SftpTool({
-            host: config.host,
-            port: config.port,
-            username: config.username,
-            password: config.password,
-        });
-    }
-    else {
+    if (config.port === 21 || config.port === 20) {
         return new FtpTool({
             host: config.host,
             port: config.port,
             user: config.username === '' ? undefined : config.username,
             password: config.password === '' ? undefined : config.password,
+        });
+    }
+    else {
+        return new SftpTool({
+            host: config.host,
+            port: config.port,
+            username: config.username,
+            password: config.password,
         });
     }
 }
