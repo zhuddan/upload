@@ -1,6 +1,6 @@
 {
   "name": "@zd~/upload",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "一个基于 basic-ftp 和 ssh2-sftp-client 的 FTP/SFTP 上传工具，帮助你快速将本地资源上传到 FTP/SFTP 服务器。",
   "author": "zhuddan <476182045@qq.com>",
   "license": "ISC",
