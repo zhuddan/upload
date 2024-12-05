@@ -42489,20 +42489,21 @@ class FtpTool {
     }
 }
 function createSftpClient(config) {
-    if (config.port === 21 || config.port === 20) {
-        return new FtpTool({
-            host: config.host,
-            port: config.port,
-            user: config.username === '' ? undefined : config.username,
-            password: config.password === '' ? undefined : config.password,
-        });
-    }
-    else {
+    if (config.protocol === 'sftp'
+        || (config.port !== 21 && config.port !== 20)) {
         return new SftpTool({
             host: config.host,
             port: config.port,
             username: config.username,
             password: config.password,
+        });
+    }
+    else {
+        return new FtpTool({
+            host: config.host,
+            port: config.port,
+            user: config.username === '' ? undefined : config.username,
+            password: config.password === '' ? undefined : config.password,
         });
     }
 }
@@ -43950,7 +43951,7 @@ function boxen(text, options) {
 	return boxContent(text, options.width, options);
 }
 
-var version = "0.1.3";
+var version = "0.2.0";
 
 const bannerMessage = `
 ${picocolorsExports.cyan(`欢迎使用 @zd~/upload@${version}`)}
