@@ -43951,7 +43951,7 @@ function boxen(text, options) {
 	return boxContent(text, options.width, options);
 }
 
-var version = "0.2.0";
+var version = "0.2.2";
 
 const bannerMessage = `
 ${picocolorsExports.cyan(`欢迎使用 @zd~/upload@${version}`)}
