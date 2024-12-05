@@ -25,8 +25,7 @@
   ],
   "scripts": {
     "dev": "rollup -c -w",
-    "build": "rollup -c",
-    "update": "bumpp",
+    "build": "bumpp && rollup -c",
     "release": "pnpm publish --access public -no-git-checks",
     "test": "node dist/script.js -l ./test -s /test",
     "test:config": "node dist/script.js -c local -l ./test -s /test"
