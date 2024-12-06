@@ -11702,7 +11702,7 @@ function boxen(text, options) {
 	return boxContent(text, options.width, options);
 }
 
-var version$1 = "0.2.2";
+var version$1 = "0.3.0";
 
 const bannerMessage = `${picocolorsExports.cyan(`欢迎使用 @zd~/upload@${version$1}`)}
 ${picocolorsExports.bgRed('警告')} ${picocolorsExports.red('请不要将任何服务器信息存放到不受信任的地方!')}
