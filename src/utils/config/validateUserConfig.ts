@@ -1,4 +1,4 @@
-import type { UserConfig, UserConfigItem } from 'src/types'
+import type { UserConfig, UserConfigItem } from '../../types'
 
 export function validateUserConfig(config: any) {
   if (config === undefined || config === null) {

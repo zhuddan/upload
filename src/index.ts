@@ -1,24 +1,17 @@
 #!/usr/bin/env node
 import fs from 'node:fs'
-import process from 'node:process'
-import path from 'node:path'
 import prompts from 'prompts'
 import { cyan } from 'picocolors'
-import { onCancel } from './utils/cancel'
-import { values } from './utils/args'
-import type { UserConfigItem } from './types/types'
-import { parseJson } from './utils/parseJson'
-import { validateUserConfig } from './utils/validateUserConfig'
-import { logger } from './utils/logger'
-import { createSftpClient } from './utils/sftp'
-import { getFiles } from './utils/getFiles'
+import { onCancel } from './utils/helpers/cancel'
+import { values } from './utils/helpers/args'
+import { parseJson } from './utils/helpers/parseJson'
+import { validateUserConfig } from './utils/config/validateUserConfig'
+import { logger } from './utils/helpers/logger'
 import { banner } from './utils/banner'
-import { EXAMPLE_CONFIG } from './utils/constants'
-import { openFile } from './utils/openFile'
-import { showIp } from './utils/showIp'
-
-const configFileName = 'upload.config.json'
-const userConfigPath = path.normalize(path.join(`${process.env.HOME ?? process.env.USERPROFILE}/`, configFileName))
+import { EXAMPLE_CONFIG, userConfigPath } from './utils/config'
+import { openFile } from './utils/helpers/openFile'
+import { showIp } from './utils/helpers/showIp'
+import { upload } from './utils/upload'
 
 async function main() {
   try {
@@ -74,6 +67,8 @@ async function main() {
         logger.infoText(`当前只有一个配置文件，默认使用 ${values.config} (${`${showIp(allConfig[values.config])}`}) 配置`)
       }
       else {
+        logger.info(`当前配置文件目录 ${userConfigPath}`)
+        console.log('')
         const { config } = await prompts({
           name: 'config',
           type: 'select',
@@ -98,33 +93,6 @@ async function main() {
   catch (error: any) {
     logger.error(error.message)
   }
-}
-
-async function upload(config: UserConfigItem, localdir: string, serverdir: string) {
-  const cwd = process.cwd()
-  const _localdir = path.resolve(cwd, localdir)
-
-  const allFiles = getFiles(_localdir)
-  if (!allFiles.length) {
-    logger.warning('本地文件夹为空，无需上传')
-    return
-  }
-  console.log(' ')
-  logger.infoText('🎈🎈🎈 开始上传')
-  console.log(' ')
-  const files = allFiles.map((filePath) => {
-    const remotePath = serverdir + filePath
-      .replace(_localdir, '')
-      .replace(/\\/g, '/')
-    return { filePath, remotePath }
-  })
-
-  const sftp = createSftpClient(config)
-  await sftp.ensureRemoteDirectoryExists(serverdir)
-  await sftp.uploadMultipleFiles(files)
-  console.log(' ')
-  logger.successText('🎉🎉🎉 上传完成')
-  console.log(' ')
 }
 
 main()
