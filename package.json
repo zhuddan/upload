@@ -26,7 +26,7 @@
   "scripts": {
     "dev": "rollup -c -w",
     "bumpp": "bumpp",
-    "build": "bumpp && rollup -c",
+    "build": "rollup -c",
     "release": "pnpm publish --access public -no-git-checks",
     "test": "node dist/script.js -l ./test -s /home/wang/gzh",
     "test:config": "node dist/script.js -c config/wang.json -l ./test -s /home/wang/gzh"
