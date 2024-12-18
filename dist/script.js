@@ -2,14 +2,14 @@
 'use strict';
 
 var fs$2 = require('node:fs');
+var process$2 = require('node:process');
+var path = require('node:path');
 var require$$0$2 = require('readline');
 var require$$2 = require('events');
 var require$$0$3 = require('tty');
 var node_util = require('node:util');
-var process$2 = require('node:process');
 var os = require('node:os');
 var tty = require('node:tty');
-var path = require('node:path');
 var node_child_process = require('node:child_process');
 var node_buffer = require('node:buffer');
 var readline = require('node:readline');
@@ -6404,9 +6404,8 @@ function parseJson(jsonPath) {
     try {
         return JSON.parse(fs$2.readFileSync(jsonPath, 'utf8').toString());
     }
-    // eslint-disable-next-line unused-imports/no-unused-vars
-    catch (_error) {
-        throw new Error('配置解析失败');
+    catch {
+        throw new Error(`${jsonPath} 配置解析失败`);
     }
 }
 
@@ -6418,23 +6417,27 @@ function validateUserConfig(config) {
     if (!allConfigNames.length) {
         throw new TypeError('配置解析失败 At least one configuration is required');
     }
-    const keys = ['host', 'port'];
     for (let index = 0; index < allConfigNames.length; index++) {
         const name = allConfigNames[index];
         const item = config[name];
-        for (const key of keys) {
-            if (item[key] === undefined || item[key] === null) {
-                throw new TypeError(`配置解析失败 config[${index}][${key}] is null or undefined`);
-            }
-            if (key === 'port' && typeof item[key] !== 'number') {
-                throw new TypeError(`配置解析失败 config[${index}][${key}] is not a number`);
-            }
-            if (key === 'host' && typeof item[key] !== 'string') {
-                throw new TypeError(`配置解析失败 config[${index}][${key}] is not a string`);
-            }
-        }
+        validateUserConfigItem(name, item);
     }
     return config;
+}
+function validateUserConfigItem(name, item) {
+    const keys = ['host', 'port'];
+    for (const key of keys) {
+        if (item[key] === undefined || item[key] === null) {
+            throw new TypeError(`配置解析失败 [${name}.${key}] is null or undefined`);
+        }
+        if (key === 'port' && typeof item[key] !== 'number') {
+            throw new TypeError(`配置解析失败 [${name}.${key}] is not a number`);
+        }
+        if (key === 'host' && typeof item[key] !== 'string') {
+            throw new TypeError(`配置解析失败 [${name}.${key}] is not a string`);
+        }
+    }
+    return item;
 }
 
 const ANSI_BACKGROUND_OFFSET$1 = 10;
@@ -44128,34 +44131,40 @@ async function main() {
         }
         const allConfig = validateUserConfig(parseJson(userConfigPath));
         const configNames = Object.keys(allConfig);
+        let selectedConfig = null;
         if (!values.config) {
-            if (configNames.length === 1) {
-                values.config = configNames[0];
-                logger.infoText(`当前只有一个配置文件，默认使用 ${values.config} (${`${showIp(allConfig[values.config])}`}) 配置`);
-            }
-            else {
-                logger.info(`当前配置文件目录 ${userConfigPath}`);
-                console.log('');
-                const { config } = await prompts$1({
-                    name: 'config',
-                    type: 'select',
-                    message: '请选择配置文件',
-                    initial: 0,
-                    choices: configNames.map(name => ({
-                        title: `${name} (${showIp(allConfig[name])})`,
-                        value: name,
-                    })),
-                }, {
-                    onCancel,
-                });
-                values.config = config;
-            }
+            logger.info(`当前配置文件目录 ${userConfigPath}`);
+            console.log('');
+            const { configName } = await prompts$1({
+                name: 'configName',
+                type: 'select',
+                message: '请选择配置文件',
+                initial: 0,
+                choices: configNames.map(name => ({
+                    title: `${name} (${showIp(allConfig[name])})`,
+                    value: name,
+                })),
+            }, {
+                onCancel,
+            });
+            selectedConfig = allConfig[configName];
+        }
+        else if (values.config.endsWith('.json')) {
+            const cwd = process$2.cwd();
+            const filePath = path.join(cwd, values.config);
+            const json = parseJson(filePath);
+            selectedConfig = validateUserConfigItem(filePath, json);
         }
         else if (!configNames.includes(values.config)) {
             logger.warning(`当前所有配置文件如下：\n${configNames.map(e => picocolorsExports.cyan(`  ${e} (${allConfig[e].host}:${allConfig[e].port}) `)).join('\n')}`);
             throw new Error(`配置文件 "${values.config}" 不存在 `);
         }
-        await upload(allConfig[`${values.config}`], values.localdir, values.serverdir);
+        if (selectedConfig) {
+            await upload(selectedConfig, values.localdir, values.serverdir);
+        }
+        else {
+            throw new Error(`未知错误`);
+        }
     }
     catch (error) {
         logger.error(error.message);
