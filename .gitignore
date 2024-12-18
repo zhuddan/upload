@@ -6,3 +6,5 @@ upload.config.json
 /static/**/*
 
 dist
+
+wang.json
