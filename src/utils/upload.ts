@@ -10,7 +10,7 @@ export async function upload(config: UserConfigItem, localdir: string, serverdir
   const cwd = process.cwd()
   const _localdir = path.resolve(cwd, localdir)
   logger.info(`本地目录 ${_localdir}`)
-  logger.info(`远程目录 ${_localdir}`)
+  logger.info(`远程目录 ${serverdir}`)
 
   const allFiles = getFiles(_localdir)
   if (!allFiles.length) {
