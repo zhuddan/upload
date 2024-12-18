@@ -1,17 +1,20 @@
 #!/usr/bin/env node
 import fs from 'node:fs'
+import process from 'node:process'
+import path from 'node:path'
 import prompts from 'prompts'
 import { cyan } from 'picocolors'
 import { onCancel } from './utils/helpers/cancel'
 import { values } from './utils/helpers/args'
 import { parseJson } from './utils/helpers/parseJson'
-import { validateUserConfig } from './utils/config/validateUserConfig'
+import { validateUserConfig, validateUserConfigItem } from './utils/config/validateUserConfig'
 import { logger } from './utils/helpers/logger'
 import { banner } from './utils/banner'
 import { EXAMPLE_CONFIG, userConfigPath } from './utils/config'
 import { openFile } from './utils/helpers/openFile'
 import { showIp } from './utils/helpers/showIp'
 import { upload } from './utils/upload'
+import type { UserConfigItem } from './types'
 
 async function main() {
   try {
@@ -58,37 +61,42 @@ async function main() {
     }
 
     const allConfig = validateUserConfig(parseJson(userConfigPath))
-
     const configNames = Object.keys(allConfig)
+    let selectedConfig: UserConfigItem | null = null
 
     if (!values.config) {
-      if (configNames.length === 1) {
-        values.config = configNames[0]
-        logger.infoText(`当前只有一个配置文件，默认使用 ${values.config} (${`${showIp(allConfig[values.config])}`}) 配置`)
-      }
-      else {
-        logger.info(`当前配置文件目录 ${userConfigPath}`)
-        console.log('')
-        const { config } = await prompts({
-          name: 'config',
-          type: 'select',
-          message: '请选择配置文件',
-          initial: 0,
-          choices: configNames.map(name => ({
-            title: `${name} (${showIp(allConfig[name])})`,
-            value: name,
-          })),
-        }, {
-          onCancel,
-        })
-        values.config = config
-      }
+      logger.info(`当前配置文件目录 ${userConfigPath}`)
+      console.log('')
+      const { configName } = await prompts({
+        name: 'configName',
+        type: 'select',
+        message: '请选择配置文件',
+        initial: 0,
+        choices: configNames.map(name => ({
+          title: `${name} (${showIp(allConfig[name])})`,
+          value: name,
+        })),
+      }, {
+        onCancel,
+      })
+      selectedConfig = allConfig[configName]
+    }
+    else if (values.config.endsWith('.json')) {
+      const cwd = process.cwd()
+      const filePath = path.join(cwd, values.config)
+      const json = parseJson(filePath) as UserConfigItem
+      selectedConfig = validateUserConfigItem(filePath, json)
     }
     else if (!configNames.includes(values.config)) {
       logger.warning(`当前所有配置文件如下：\n${configNames.map(e => cyan(`  ${e} (${allConfig[e].host}:${allConfig[e].port}) `)).join('\n')}`)
       throw new Error(`配置文件 "${values.config}" 不存在 `)
     }
-    await upload(allConfig[`${values.config}`], values.localdir, values.serverdir)
+    if (selectedConfig) {
+      await upload(selectedConfig, values.localdir, values.serverdir)
+    }
+    else {
+      throw new Error(`未知错误`)
+    }
   }
   catch (error: any) {
     logger.error(error.message)
