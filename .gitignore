@@ -4,3 +4,4 @@ upload.config.json
 
 /test/**/*
 /static/**/*
+./dist
