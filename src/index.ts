@@ -19,7 +19,27 @@ import type { UserConfigItem } from './types'
 async function main() {
   try {
     banner()
+    let selectedConfig: UserConfigItem | null = null
+
+    if (!values.localdir) {
+      throw new Error(`请使用 ${cyan('--l xxx')} 指定本地文件夹 `)
+    }
+    if (!values.serverdir) {
+      throw new Error(`请使用 ${cyan('--s xxx')} 指定服务器文件夹 `)
+    }
+
+    if (values.config?.endsWith('.json')) {
+      const cwd = process.cwd()
+      const filePath = path.join(cwd, values.config)
+      const json = parseJson(filePath) as UserConfigItem
+      selectedConfig = validateUserConfigItem(filePath, json)
+      logger.infoText(`当配置为 (${`${showIp(selectedConfig)}`})`)
+      await upload(selectedConfig, values.localdir, values.serverdir)
+      return
+    }
+
     const empty = !fs.existsSync(userConfigPath)
+
     if (empty) {
       const { create } = await prompts({
         name: 'create',
@@ -53,16 +73,9 @@ async function main() {
       }
     }
 
-    if (!values.localdir) {
-      throw new Error(`请使用 ${cyan('--l xxx')} 指定本地文件夹 `)
-    }
-    if (!values.serverdir) {
-      throw new Error(`请使用 ${cyan('--s xxx')} 指定服务器文件夹 `)
-    }
-
     const allConfig = validateUserConfig(parseJson(userConfigPath), userConfigPath)
     const configNames = Object.keys(allConfig)
-    let selectedConfig: UserConfigItem | null = null
+
     logger.info(`全局配置文件 ${userConfigPath}`)
     console.log('')
 
@@ -80,13 +93,6 @@ async function main() {
         onCancel,
       })
       selectedConfig = allConfig[configName]
-    }
-    else if (values.config.endsWith('.json')) {
-      const cwd = process.cwd()
-      const filePath = path.join(cwd, values.config)
-      const json = parseJson(filePath) as UserConfigItem
-      selectedConfig = validateUserConfigItem(filePath, json)
-      logger.infoText(`当配置为 (${`${showIp(selectedConfig)}`})`)
     }
     else if (!configNames.includes(values.config)) {
       logger.warning(`当前所有配置文件如下：\n${configNames.map(e => cyan(`  ${e} (${allConfig[e].host}:${allConfig[e].port}) `)).join('\n')}`)
