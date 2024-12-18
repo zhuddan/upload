@@ -13,6 +13,7 @@ export function validateUserConfig(config: any) {
     const name = allConfigNames[index]
     const item = config[name]
     validateUserConfigItem(name, item)
+    validateUserConfigItem(name, item)
   }
   return config as UserConfig
 }

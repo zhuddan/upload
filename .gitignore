@@ -5,4 +5,4 @@ upload.config.json
 /test/**/*
 /static/**/*
 
-./dist/script.js
+./dist/*
