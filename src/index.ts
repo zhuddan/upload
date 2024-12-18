@@ -60,13 +60,13 @@ async function main() {
       throw new Error(`请使用 ${cyan('--s xxx')} 指定服务器文件夹 `)
     }
 
-    const allConfig = validateUserConfig(parseJson(userConfigPath))
+    const allConfig = validateUserConfig(parseJson(userConfigPath), userConfigPath)
     const configNames = Object.keys(allConfig)
     let selectedConfig: UserConfigItem | null = null
+    logger.info(`全局配置文件 ${userConfigPath}`)
+    console.log('')
 
     if (!values.config) {
-      logger.info(`当前配置文件目录 ${userConfigPath}`)
-      console.log('')
       const { configName } = await prompts({
         name: 'configName',
         type: 'select',
@@ -86,6 +86,7 @@ async function main() {
       const filePath = path.join(cwd, values.config)
       const json = parseJson(filePath) as UserConfigItem
       selectedConfig = validateUserConfigItem(filePath, json)
+      logger.infoText(`当配置为 (${`${showIp(selectedConfig)}`})`)
     }
     else if (!configNames.includes(values.config)) {
       logger.warning(`当前所有配置文件如下：\n${configNames.map(e => cyan(`  ${e} (${allConfig[e].host}:${allConfig[e].port}) `)).join('\n')}`)
