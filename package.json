@@ -29,7 +29,9 @@
     "build": "rollup -c",
     "release": "pnpm publish --access public -no-git-checks",
     "test": "node dist/script.js -l ./test -s /home/wang/gzh",
+    "test:base": "node dist/script.js -c yty -l ./dist -s /home/pro/nginx/html/community-admin",
     "test:config": "node dist/script.js -c config/wang.json -l ./test -s /home/wang/gzh"
+
   },
   "devDependencies": {
     "@antfu/eslint-config": "^2.21.3",

@@ -98,6 +98,9 @@ async function main() {
       logger.warning(`当前所有配置文件如下：\n${configNames.map(e => cyan(`  ${e} (${allConfig[e].host}:${allConfig[e].port}) `)).join('\n')}`)
       throw new Error(`配置文件 "${values.config}" 不存在 `)
     }
+    else {
+      selectedConfig = allConfig[values.config]
+    }
     if (selectedConfig) {
       await upload(selectedConfig, values.localdir, values.serverdir)
     }
